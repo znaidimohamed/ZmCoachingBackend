@@ -56,7 +56,7 @@ export const updateUserStatus = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const user = await toggleUserStatus(id);
 
     res.status(200).json({
@@ -75,7 +75,7 @@ export const updateUserProfile = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { age, height, weight, goal, activityLevel, phone } = req.body;
 
     const user = await updateUserProfileByAdmin(id, {

@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const pack_controller_1 = require("../controllers/pack.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const router = (0, express_1.Router)();
+router.get("/", pack_controller_1.getPacks);
+router.get("/admin", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), pack_controller_1.getAllPacksAdmin);
+router.post("/", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), pack_controller_1.createPack);
+router.patch("/:id/toggle-status", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), pack_controller_1.togglePackStatus);
+router.delete("/:id", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), pack_controller_1.deletePack);
+exports.default = router;

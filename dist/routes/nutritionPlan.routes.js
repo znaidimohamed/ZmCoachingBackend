@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const nutritionPlan_controller_1 = require("../controllers/nutritionPlan.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const nutritionPdfUpload_middleware_1 = require("../middlewares/nutritionPdfUpload.middleware");
+const router = (0, express_1.Router)();
+router.get("/", nutritionPlan_controller_1.getNutritionPlans);
+router.get("/me", auth_middleware_1.protect, nutritionPlan_controller_1.getMyNutritionPlans);
+router.get("/admin", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), nutritionPlan_controller_1.getAllNutritionPlansAdmin);
+router.post("/", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), nutritionPlan_controller_1.createNutritionPlan);
+router.patch("/:id/pdf", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), nutritionPdfUpload_middleware_1.uploadNutritionPdf, nutritionPlan_controller_1.uploadPlanPdf);
+router.patch("/:id/assigned-users", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), nutritionPlan_controller_1.updateNutritionPlanAssignedUsers);
+router.patch("/:id/toggle-status", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), nutritionPlan_controller_1.toggleNutritionPlanStatus);
+router.delete("/:id", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), nutritionPlan_controller_1.deleteNutritionPlan);
+exports.default = router;

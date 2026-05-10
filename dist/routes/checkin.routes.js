@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const checkin_controller_1 = require("../controllers/checkin.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const checkinUpload_middleware_1 = require("../middlewares/checkinUpload.middleware");
+const router = (0, express_1.Router)();
+router.post("/me", auth_middleware_1.protect, checkinUpload_middleware_1.uploadCheckInPhotos, checkin_controller_1.createMyCheckIn);
+router.get("/me", auth_middleware_1.protect, checkin_controller_1.getMyCheckIns);
+router.get("/admin", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), checkin_controller_1.getCheckInsAdmin);
+router.get("/admin/user/:userId", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), checkin_controller_1.getCheckInsByUserAdmin);
+router.patch("/:id/feedback", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), checkin_controller_1.addCoachFeedback);
+router.delete("/:id", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), checkin_controller_1.deleteCheckIn);
+exports.default = router;

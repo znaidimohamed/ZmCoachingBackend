@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const schedule_controller_1 = require("../controllers/schedule.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const router = (0, express_1.Router)();
+router.get("/me", auth_middleware_1.protect, schedule_controller_1.getMySchedules);
+router.get("/admin", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), schedule_controller_1.getSchedulesAdmin);
+router.get("/admin/user/:userId", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), schedule_controller_1.getSchedulesByUserAdmin);
+router.post("/", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), schedule_controller_1.createSchedule);
+router.patch("/:id/toggle-status", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), schedule_controller_1.toggleScheduleStatus);
+router.delete("/:id", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), schedule_controller_1.deleteSchedule);
+exports.default = router;

@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const progress_controller_1 = require("../controllers/progress.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const router = (0, express_1.Router)();
+router.get("/me", auth_middleware_1.protect, progress_controller_1.getMyProgress);
+router.get("/user/:userId", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), progress_controller_1.getProgressByUserAdmin);
+router.post("/", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), progress_controller_1.createProgressEntry);
+router.delete("/:id", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), progress_controller_1.deleteProgressEntry);
+exports.default = router;

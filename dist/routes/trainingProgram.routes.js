@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const trainingProgram_controller_1 = require("../controllers/trainingProgram.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const trainingPdfUpload_middleware_1 = require("../middlewares/trainingPdfUpload.middleware");
+const router = (0, express_1.Router)();
+router.get("/", trainingProgram_controller_1.getTrainingPrograms);
+router.get("/me", auth_middleware_1.protect, trainingProgram_controller_1.getMyTrainingPrograms);
+router.get("/admin", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), trainingProgram_controller_1.getAllTrainingProgramsAdmin);
+router.post("/", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), trainingPdfUpload_middleware_1.uploadTrainingPdf, trainingProgram_controller_1.createTrainingProgram);
+router.patch("/:id/assigned-users", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), trainingProgram_controller_1.updateTrainingProgramAssignedUsers);
+router.patch("/:id/toggle-status", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), trainingProgram_controller_1.toggleTrainingProgramStatus);
+router.delete("/:id", auth_middleware_1.protect, (0, role_middleware_1.allowRoles)("admin"), trainingProgram_controller_1.deleteTrainingProgram);
+exports.default = router;
