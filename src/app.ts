@@ -14,6 +14,7 @@ import courseRoutes from "./routes/course.routes";
 import purchaseRequestRoutes from "./routes/purchaseRequest.routes";
 import scheduleRoutes from "./routes/schedule.routes";
 import checkInRoutes from "./routes/checkin.routes";
+import aiRoutes from "./routes/ai.routes";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 import leadRoutes from "./routes/lead.routes";
 
@@ -42,6 +43,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/checkins", checkInRoutes);
 app.use("/api/purchase-requests", purchaseRequestRoutes);
+app.use("/api/ai", aiRoutes);
 app.use("/api/schedules", scheduleRoutes);
 
 app.use(notFoundHandler);
