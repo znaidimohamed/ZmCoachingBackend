@@ -46,6 +46,7 @@ app.use("/api/checkins", checkInRoutes);
 app.use("/api/purchase-requests", purchaseRequestRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/schedules", scheduleRoutes);
+
 app.use("/api/seed", seedRoutes);
 
 app.use(notFoundHandler);

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCheckIn = exports.addCoachFeedback = exports.getCheckInsByUserAdmin = exports.getCheckInsAdmin = exports.getMyCheckIns = exports.createMyCheckIn = void 0;
 const checkin_model_1 = require("../models/checkin.model");
+const uploadToCloudinary_1 = require("../utils/uploadToCloudinary");
 const createMyCheckIn = async (req, res) => {
     try {
         const userId = req.user?.userId;
@@ -15,6 +16,21 @@ const createMyCheckIn = async (req, res) => {
             });
         }
         const files = req.files;
+        let frontPhoto;
+        let sidePhoto;
+        let backPhoto;
+        if (files?.frontPhoto?.[0]) {
+            const result = await (0, uploadToCloudinary_1.uploadToCloudinary)(files.frontPhoto[0].buffer, "zmcoaching/checkins", "image");
+            frontPhoto = result.secure_url;
+        }
+        if (files?.sidePhoto?.[0]) {
+            const result = await (0, uploadToCloudinary_1.uploadToCloudinary)(files.sidePhoto[0].buffer, "zmcoaching/checkins", "image");
+            sidePhoto = result.secure_url;
+        }
+        if (files?.backPhoto?.[0]) {
+            const result = await (0, uploadToCloudinary_1.uploadToCloudinary)(files.backPhoto[0].buffer, "zmcoaching/checkins", "image");
+            backPhoto = result.secure_url;
+        }
         const checkIn = await checkin_model_1.CheckIn.create({
             user: userId,
             date: date || new Date(),
@@ -23,15 +39,9 @@ const createMyCheckIn = async (req, res) => {
             energy: energy ? Number(energy) : undefined,
             mood,
             notes,
-            frontPhoto: files?.frontPhoto?.[0]
-                ? `/uploads/checkins/${files.frontPhoto[0].filename}`
-                : undefined,
-            sidePhoto: files?.sidePhoto?.[0]
-                ? `/uploads/checkins/${files.sidePhoto[0].filename}`
-                : undefined,
-            backPhoto: files?.backPhoto?.[0]
-                ? `/uploads/checkins/${files.backPhoto[0].filename}`
-                : undefined,
+            frontPhoto,
+            sidePhoto,
+            backPhoto,
         });
         res.status(201).json({
             message: "Check-in sent successfully",

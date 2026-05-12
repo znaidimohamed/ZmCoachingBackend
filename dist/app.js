@@ -19,6 +19,7 @@ const purchaseRequest_routes_1 = __importDefault(require("./routes/purchaseReque
 const schedule_routes_1 = __importDefault(require("./routes/schedule.routes"));
 const checkin_routes_1 = __importDefault(require("./routes/checkin.routes"));
 const ai_routes_1 = __importDefault(require("./routes/ai.routes"));
+const seed_routes_1 = __importDefault(require("./routes/seed.routes"));
 const error_middleware_1 = require("./middlewares/error.middleware");
 const lead_routes_1 = __importDefault(require("./routes/lead.routes"));
 const app = (0, express_1.default)();
@@ -44,6 +45,7 @@ app.use("/api/checkins", checkin_routes_1.default);
 app.use("/api/purchase-requests", purchaseRequest_routes_1.default);
 app.use("/api/ai", ai_routes_1.default);
 app.use("/api/schedules", schedule_routes_1.default);
+app.use("/api/seed", seed_routes_1.default);
 app.use(error_middleware_1.notFoundHandler);
 app.use(error_middleware_1.errorHandler);
 exports.default = app;

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { CheckIn } from "../models/checkin.model";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary";
 
 export const createMyCheckIn = async (req: Request, res: Response) => {
   try {
@@ -20,6 +21,40 @@ export const createMyCheckIn = async (req: Request, res: Response) => {
       [fieldname: string]: Express.Multer.File[];
     };
 
+    let frontPhoto: string | undefined;
+    let sidePhoto: string | undefined;
+    let backPhoto: string | undefined;
+
+    if (files?.frontPhoto?.[0]) {
+      const result = await uploadToCloudinary(
+        files.frontPhoto[0].buffer,
+        "zmcoaching/checkins",
+        "image"
+      );
+
+      frontPhoto = result.secure_url;
+    }
+
+    if (files?.sidePhoto?.[0]) {
+      const result = await uploadToCloudinary(
+        files.sidePhoto[0].buffer,
+        "zmcoaching/checkins",
+        "image"
+      );
+
+      sidePhoto = result.secure_url;
+    }
+
+    if (files?.backPhoto?.[0]) {
+      const result = await uploadToCloudinary(
+        files.backPhoto[0].buffer,
+        "zmcoaching/checkins",
+        "image"
+      );
+
+      backPhoto = result.secure_url;
+    }
+
     const checkIn = await CheckIn.create({
       user: userId,
       date: date || new Date(),
@@ -28,15 +63,9 @@ export const createMyCheckIn = async (req: Request, res: Response) => {
       energy: energy ? Number(energy) : undefined,
       mood,
       notes,
-      frontPhoto: files?.frontPhoto?.[0]
-        ? `/uploads/checkins/${files.frontPhoto[0].filename}`
-        : undefined,
-      sidePhoto: files?.sidePhoto?.[0]
-        ? `/uploads/checkins/${files.sidePhoto[0].filename}`
-        : undefined,
-      backPhoto: files?.backPhoto?.[0]
-        ? `/uploads/checkins/${files.backPhoto[0].filename}`
-        : undefined,
+      frontPhoto,
+      sidePhoto,
+      backPhoto,
     });
 
     res.status(201).json({

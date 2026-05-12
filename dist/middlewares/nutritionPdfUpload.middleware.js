@@ -5,24 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadNutritionPdf = void 0;
 const multer_1 = __importDefault(require("multer"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
-const uploadDir = "uploads/nutrition-pdfs";
-if (!fs_1.default.existsSync(uploadDir)) {
-    fs_1.default.mkdirSync(uploadDir, { recursive: true });
-}
-const storage = multer_1.default.diskStorage({
-    destination: (_req, _file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (_req, file, cb) => {
-        const uniqueName = Date.now() +
-            "-" +
-            Math.round(Math.random() * 1e9) +
-            path_1.default.extname(file.originalname);
-        cb(null, uniqueName);
-    },
-});
+const storage = multer_1.default.memoryStorage();
 const fileFilter = (_req, file, cb) => {
     if (file.mimetype === "application/pdf") {
         cb(null, true);
