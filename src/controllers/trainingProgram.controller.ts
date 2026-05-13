@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { TrainingProgram } from "../models/trainingProgram.model";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary";
 
 export const createTrainingProgram = async (req: Request, res: Response) => {
   try {
@@ -18,16 +19,28 @@ export const createTrainingProgram = async (req: Request, res: Response) => {
         ? assignedUsers
         : [];
 
+    let pdfUrl: string | undefined;
+    let pdfName: string | undefined;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "zmcoaching/training-pdfs",
+        "raw"
+      );
+
+      pdfUrl = result.secure_url;
+      pdfName = req.file.originalname;
+    }
+
     const program = await TrainingProgram.create({
       name,
       duration,
       level,
       description,
       assignedUsers: parsedAssignedUsers,
-      pdfUrl: req.file
-        ? `/uploads/training-pdfs/${req.file.filename}`
-        : undefined,
-      pdfName: req.file ? req.file.originalname : undefined,
+      pdfUrl,
+      pdfName,
     });
 
     res.status(201).json({
@@ -40,11 +53,17 @@ export const createTrainingProgram = async (req: Request, res: Response) => {
 };
 
 export const getTrainingPrograms = async (_req: Request, res: Response) => {
-  const programs = await TrainingProgram.find({ isActive: true }).sort({
-    createdAt: -1,
-  });
+  try {
+    const programs = await TrainingProgram.find({ isActive: true }).sort({
+      createdAt: -1,
+    });
 
-  res.json({ programs });
+    res.json({ programs });
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message || "Failed to fetch training programs",
+    });
+  }
 };
 
 export const getMyTrainingPrograms = async (req: Request, res: Response) => {
@@ -68,11 +87,17 @@ export const getAllTrainingProgramsAdmin = async (
   _req: Request,
   res: Response
 ) => {
-  const programs = await TrainingProgram.find()
-    .populate("assignedUsers", "fullName email role")
-    .sort({ createdAt: -1 });
+  try {
+    const programs = await TrainingProgram.find()
+      .populate("assignedUsers", "fullName email role")
+      .sort({ createdAt: -1 });
 
-  res.json({ programs });
+    res.json({ programs });
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message || "Failed to fetch admin training programs",
+    });
+  }
 };
 
 export const updateTrainingProgramAssignedUsers = async (
@@ -91,7 +116,9 @@ export const updateTrainingProgramAssignedUsers = async (
     ).populate("assignedUsers", "fullName email role");
 
     if (!program) {
-      return res.status(404).json({ message: "Training program not found" });
+      return res.status(404).json({
+        message: "Training program not found",
+      });
     }
 
     res.json({
@@ -109,23 +136,39 @@ export const toggleTrainingProgramStatus = async (
   req: Request,
   res: Response
 ) => {
-  const program = await TrainingProgram.findById(req.params.id);
+  try {
+    const program = await TrainingProgram.findById(req.params.id);
 
-  if (!program) {
-    return res.status(404).json({ message: "Training program not found" });
+    if (!program) {
+      return res.status(404).json({
+        message: "Training program not found",
+      });
+    }
+
+    program.isActive = !program.isActive;
+    await program.save();
+
+    res.json({
+      message: "Training program status updated",
+      program,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message || "Failed to update training program status",
+    });
   }
-
-  program.isActive = !program.isActive;
-  await program.save();
-
-  res.json({
-    message: "Training program status updated",
-    program,
-  });
 };
 
 export const deleteTrainingProgram = async (req: Request, res: Response) => {
-  await TrainingProgram.findByIdAndDelete(req.params.id);
+  try {
+    await TrainingProgram.findByIdAndDelete(req.params.id);
 
-  res.json({ message: "Training program deleted successfully" });
+    res.json({
+      message: "Training program deleted successfully",
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message || "Failed to delete training program",
+    });
+  }
 };
