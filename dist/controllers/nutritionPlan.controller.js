@@ -2,9 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toggleNutritionPlanStatus = exports.deleteNutritionPlan = exports.updateNutritionPlanAssignedUsers = exports.getMyNutritionPlans = exports.getAllNutritionPlansAdmin = exports.getNutritionPlans = exports.uploadPlanPdf = exports.createNutritionPlan = void 0;
 const nutritionPlan_model_1 = require("../models/nutritionPlan.model");
+const uploadToCloudinary_1 = require("../utils/uploadToCloudinary");
 const createNutritionPlan = async (req, res) => {
     try {
         const { title, subtitle, description, calories, goal, meals, isPopular, assignedUsers, } = req.body;
+        const parsedAssignedUsers = typeof assignedUsers === "string"
+            ? JSON.parse(assignedUsers || "[]")
+            : Array.isArray(assignedUsers)
+                ? assignedUsers
+                : [];
         const plan = await nutritionPlan_model_1.NutritionPlan.create({
             title,
             subtitle,
@@ -17,7 +23,7 @@ const createNutritionPlan = async (req, res) => {
                     .split("\n")
                     .map((m) => m.trim())
                     .filter(Boolean),
-            assignedUsers: Array.isArray(assignedUsers) ? assignedUsers : [],
+            assignedUsers: parsedAssignedUsers,
             isPopular: isPopular === true || isPopular === "true",
         });
         res.status(201).json({
@@ -39,7 +45,8 @@ const uploadPlanPdf = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: "PDF file is required" });
         }
-        plan.pdfUrl = `/uploads/nutrition-pdfs/${req.file.filename}`;
+        const result = await (0, uploadToCloudinary_1.uploadToCloudinary)(req.file.buffer, "zmcoaching/nutrition-pdfs", "raw", req.file.originalname);
+        plan.pdfUrl = result.secure_url;
         plan.pdfName = req.file.originalname;
         await plan.save();
         res.json({
@@ -52,10 +59,6 @@ const uploadPlanPdf = async (req, res) => {
     }
 };
 exports.uploadPlanPdf = uploadPlanPdf;
-/**
- * Public homepage nutrition plans.
- * These are the marketing/display plans.
- */
 const getNutritionPlans = async (_req, res) => {
     const plans = await nutritionPlan_model_1.NutritionPlan.find({ isActive: true }).sort({
         createdAt: -1,
@@ -63,9 +66,6 @@ const getNutritionPlans = async (_req, res) => {
     res.json({ plans });
 };
 exports.getNutritionPlans = getNutritionPlans;
-/**
- * Admin sees all nutrition plans with assigned users populated.
- */
 const getAllNutritionPlansAdmin = async (_req, res) => {
     const plans = await nutritionPlan_model_1.NutritionPlan.find()
         .populate("assignedUsers", "fullName email role")
@@ -73,9 +73,6 @@ const getAllNutritionPlansAdmin = async (_req, res) => {
     res.json({ plans });
 };
 exports.getAllNutritionPlansAdmin = getAllNutritionPlansAdmin;
-/**
- * Connected user sees only nutrition plans assigned to him.
- */
 const getMyNutritionPlans = async (req, res) => {
     try {
         const userId = req.user?.userId;

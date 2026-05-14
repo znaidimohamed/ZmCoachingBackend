@@ -14,6 +14,6 @@ export const uploadNutritionPdf = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 1024,
+    fileSize: 50 * 1024 * 1024,
   },
 }).single("pdf");

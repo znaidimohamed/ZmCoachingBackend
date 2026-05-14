@@ -26,7 +26,8 @@ export const createTrainingProgram = async (req: Request, res: Response) => {
       const result = await uploadToCloudinary(
         req.file.buffer,
         "zmcoaching/training-pdfs",
-        "raw"
+        "raw",
+        req.file.originalname
       );
 
       pdfUrl = result.secure_url;
