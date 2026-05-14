@@ -10,7 +10,9 @@ export const uploadToCloudinary = (
       {
         folder,
         resource_type: resourceType,
-      },
+        use_filename: true,
+        unique_filename: false,
+    },
       (error: any, result: any) => {
         if (error) reject(error);
         else resolve(result);
