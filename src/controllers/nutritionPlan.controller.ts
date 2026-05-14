@@ -62,7 +62,7 @@ export const uploadPlanPdf = async (req: Request, res: Response) => {
     const result = await uploadToCloudinary(
       req.file.buffer,
       "zmcoaching/nutrition-pdfs",
-      "raw",
+      "image",
       req.file.originalname
     );
 
