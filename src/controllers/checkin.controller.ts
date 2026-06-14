@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { CheckIn } from "../models/checkin.model";
+import { User } from "../models/user.model";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary";
+import { createNotification } from "../utils/createNotification";
 
 export const createMyCheckIn = async (req: Request, res: Response) => {
   try {
@@ -68,6 +70,19 @@ export const createMyCheckIn = async (req: Request, res: Response) => {
       backPhoto,
     });
 
+    const admin = await User.findOne({ role: "admin" });
+
+    if (admin) {
+      await createNotification({
+        recipient: admin._id,
+        sender: userId,
+        title: "Nouveau check-in",
+        message: "Un client a envoyé un nouveau check-in.",
+        type: "checkin",
+        link: "/dashboard/checkins",
+      });
+    }
+
     res.status(201).json({
       message: "Check-in sent successfully",
       checkIn,
@@ -127,6 +142,7 @@ export const getCheckInsByUserAdmin = async (req: Request, res: Response) => {
 
 export const addCoachFeedback = async (req: Request, res: Response) => {
   try {
+    const coachId = req.user?.userId;
     const { feedback } = req.body;
 
     if (!feedback) {
@@ -149,6 +165,17 @@ export const addCoachFeedback = async (req: Request, res: Response) => {
         message: "Check-in not found",
       });
     }
+
+    const user: any = checkIn.user;
+
+    await createNotification({
+      recipient: user._id,
+      sender: coachId,
+      title: "Feedback du coach",
+      message: "Votre coach a ajouté un feedback à votre check-in.",
+      type: "checkin",
+      link: "/user/checkins",
+    });
 
     res.json({
       message: "Feedback added successfully",

@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { ProgressEntry } from "../models/progress.model";
+import { createNotification } from "../utils/createNotification";
 
 export const createProgressEntry = async (req: Request, res: Response) => {
   try {
     const { user, date, weight, waist, chest, arms, notes } = req.body;
+    const coachId = req.user?.userId;
 
     if (!user || !weight) {
       return res.status(400).json({
@@ -19,6 +21,15 @@ export const createProgressEntry = async (req: Request, res: Response) => {
       chest,
       arms,
       notes,
+    });
+
+    await createNotification({
+      recipient: user,
+      sender: coachId,
+      title: "Nouvelle progression ajoutée",
+      message: "Votre coach a ajouté une nouvelle entrée de progression.",
+      type: "progress",
+      link: "/user/progress",
     });
 
     res.status(201).json({

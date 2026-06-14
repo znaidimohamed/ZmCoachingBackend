@@ -18,6 +18,7 @@ import seedRoutes from "./routes/seed.routes";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 import leadRoutes from "./routes/lead.routes";
 import messageRoutes from "./routes/message.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/purchase-requests", purchaseRequestRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use("/api/seed", seedRoutes);
 

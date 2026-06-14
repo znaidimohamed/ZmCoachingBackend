@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { PurchaseRequest } from "../models/purchaseRequest.model";
 import { Course } from "../models/course.model";
 import { Pack } from "../models/pack.model";
+import { User } from "../models/user.model";
+import { createNotification } from "../utils/createNotification";
 
 export const createPurchaseRequest = async (req: Request, res: Response) => {
   try {
@@ -44,6 +46,19 @@ export const createPurchaseRequest = async (req: Request, res: Response) => {
       itemPrice: item.price,
       message,
     });
+
+    const admin = await User.findOne({ role: "admin" });
+
+    if (admin) {
+      await createNotification({
+        recipient: admin._id,
+        sender: userId,
+        title: "Nouvelle demande d’achat",
+        message: `Un client a demandé: ${itemTitle}.`,
+        type: "system",
+        link: "/dashboard/purchase-requests",
+      });
+    }
 
     res.status(201).json({
       message: "Purchase request created successfully",
@@ -88,6 +103,7 @@ export const getMyPurchaseRequests = async (req: Request, res: Response) => {
 
 export const updatePurchaseStatus = async (req: Request, res: Response) => {
   try {
+    const coachId = req.user?.userId;
     const { status } = req.body;
 
     if (!["pending", "paid", "cancelled"].includes(status)) {
@@ -107,6 +123,17 @@ export const updatePurchaseStatus = async (req: Request, res: Response) => {
         message: "Purchase request not found",
       });
     }
+
+    const user: any = request.user;
+
+    await createNotification({
+      recipient: user._id,
+      sender: coachId,
+      title: "Demande d’achat mise à jour",
+      message: `Votre demande "${request.itemTitle}" est maintenant: ${status}.`,
+      type: "system",
+      link: "/user",
+    });
 
     res.json({
       message: "Purchase request status updated",

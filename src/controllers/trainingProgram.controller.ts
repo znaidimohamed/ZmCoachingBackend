@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { TrainingProgram } from "../models/trainingProgram.model";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary";
+import { createNotification } from "../utils/createNotification";
 
 export const createTrainingProgram = async (req: Request, res: Response) => {
   try {
     const { name, duration, level, description, assignedUsers } = req.body;
+    const coachId = req.user?.userId;
 
     if (!name || !duration || !level || !description) {
       return res.status(400).json({
@@ -43,6 +45,19 @@ export const createTrainingProgram = async (req: Request, res: Response) => {
       pdfUrl,
       pdfName,
     });
+
+    await Promise.all(
+      parsedAssignedUsers.map((userId: string) =>
+        createNotification({
+          recipient: userId,
+          sender: coachId,
+          title: "Nouveau programme training",
+          message: `Votre coach vous a assigné un nouveau programme: ${name}.`,
+          type: "training",
+          link: "/user/training",
+        })
+      )
+    );
 
     res.status(201).json({
       message: "Training program created successfully",
@@ -106,12 +121,15 @@ export const updateTrainingProgramAssignedUsers = async (
   res: Response
 ) => {
   try {
+    const coachId = req.user?.userId;
     const { assignedUsers } = req.body;
+
+    const assigned = Array.isArray(assignedUsers) ? assignedUsers : [];
 
     const program = await TrainingProgram.findByIdAndUpdate(
       req.params.id,
       {
-        assignedUsers: Array.isArray(assignedUsers) ? assignedUsers : [],
+        assignedUsers: assigned,
       },
       { new: true }
     ).populate("assignedUsers", "fullName email role");
@@ -121,6 +139,19 @@ export const updateTrainingProgramAssignedUsers = async (
         message: "Training program not found",
       });
     }
+
+    await Promise.all(
+      assigned.map((userId: string) =>
+        createNotification({
+          recipient: userId,
+          sender: coachId,
+          title: "Programme training assigné",
+          message: `Votre coach vous a assigné le programme: ${program.name}.`,
+          type: "training",
+          link: "/user/training",
+        })
+      )
+    );
 
     res.json({
       message: "Assigned users updated successfully",

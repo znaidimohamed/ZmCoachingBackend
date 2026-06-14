@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { NutritionPlan } from "../models/nutritionPlan.model";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary";
+import { createNotification } from "../utils/createNotification";
 
 export const createNutritionPlan = async (req: Request, res: Response) => {
   try {
@@ -14,6 +15,8 @@ export const createNutritionPlan = async (req: Request, res: Response) => {
       isPopular,
       assignedUsers,
     } = req.body;
+
+    const coachId = req.user?.userId;
 
     const parsedAssignedUsers =
       typeof assignedUsers === "string"
@@ -38,6 +41,19 @@ export const createNutritionPlan = async (req: Request, res: Response) => {
       isPopular: isPopular === true || isPopular === "true",
     });
 
+    await Promise.all(
+      parsedAssignedUsers.map((userId: string) =>
+        createNotification({
+          recipient: userId,
+          sender: coachId,
+          title: "Nouveau plan nutrition",
+          message: `Votre coach vous a assigné un nouveau plan nutrition: ${title}.`,
+          type: "nutrition",
+          link: "/user/nutrition",
+        })
+      )
+    );
+
     res.status(201).json({
       message: "Nutrition plan created successfully",
       plan,
@@ -49,6 +65,7 @@ export const createNutritionPlan = async (req: Request, res: Response) => {
 
 export const uploadPlanPdf = async (req: Request, res: Response) => {
   try {
+    const coachId = req.user?.userId;
     const plan = await NutritionPlan.findById(req.params.id);
 
     if (!plan) {
@@ -70,6 +87,19 @@ export const uploadPlanPdf = async (req: Request, res: Response) => {
     plan.pdfName = req.file.originalname;
 
     await plan.save();
+
+    await Promise.all(
+      plan.assignedUsers.map((userId: any) =>
+        createNotification({
+          recipient: userId,
+          sender: coachId,
+          title: "PDF nutrition ajouté",
+          message: `Un PDF a été ajouté au plan nutrition: ${plan.title}.`,
+          type: "nutrition",
+          link: "/user/nutrition",
+        })
+      )
+    );
 
     res.json({
       message: "PDF uploaded successfully",
@@ -118,12 +148,15 @@ export const updateNutritionPlanAssignedUsers = async (
   res: Response
 ) => {
   try {
+    const coachId = req.user?.userId;
     const { assignedUsers } = req.body;
+
+    const assigned = Array.isArray(assignedUsers) ? assignedUsers : [];
 
     const plan = await NutritionPlan.findByIdAndUpdate(
       req.params.id,
       {
-        assignedUsers: Array.isArray(assignedUsers) ? assignedUsers : [],
+        assignedUsers: assigned,
       },
       { new: true }
     ).populate("assignedUsers", "fullName email role");
@@ -131,6 +164,19 @@ export const updateNutritionPlanAssignedUsers = async (
     if (!plan) {
       return res.status(404).json({ message: "Nutrition plan not found" });
     }
+
+    await Promise.all(
+      assigned.map((userId: string) =>
+        createNotification({
+          recipient: userId,
+          sender: coachId,
+          title: "Plan nutrition assigné",
+          message: `Votre coach vous a assigné le plan nutrition: ${plan.title}.`,
+          type: "nutrition",
+          link: "/user/nutrition",
+        })
+      )
+    );
 
     res.json({
       message: "Assigned users updated successfully",

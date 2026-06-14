@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { Schedule } from "../models/schedule.model";
+import { createNotification } from "../utils/createNotification";
 
 export const createSchedule = async (req: Request, res: Response) => {
   try {
     const { user, day, startTime, endTime, title, type, notes } = req.body;
+    const coachId = req.user?.userId;
 
     if (!user || !day || !startTime || !endTime || !title) {
       return res.status(400).json({
@@ -19,6 +21,15 @@ export const createSchedule = async (req: Request, res: Response) => {
       title,
       type,
       notes,
+    });
+
+    await createNotification({
+      recipient: user,
+      sender: coachId,
+      title: "Nouvelle séance planifiée",
+      message: `Votre coach a ajouté une séance: ${title} - ${day} ${startTime}.`,
+      type: "schedule",
+      link: "/user/schedule",
     });
 
     res.status(201).json({
@@ -81,6 +92,7 @@ export const getMySchedules = async (req: Request, res: Response) => {
 
 export const toggleScheduleStatus = async (req: Request, res: Response) => {
   try {
+    const coachId = req.user?.userId;
     const schedule = await Schedule.findById(req.params.id);
 
     if (!schedule) {
@@ -89,6 +101,17 @@ export const toggleScheduleStatus = async (req: Request, res: Response) => {
 
     schedule.isActive = !schedule.isActive;
     await schedule.save();
+
+    await createNotification({
+      recipient: schedule.user,
+      sender: coachId,
+      title: "Planning mis à jour",
+      message: `Votre séance "${schedule.title}" a été ${
+        schedule.isActive ? "activée" : "désactivée"
+      }.`,
+      type: "schedule",
+      link: "/user/schedule",
+    });
 
     res.json({
       message: "Schedule status updated",
