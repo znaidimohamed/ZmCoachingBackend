@@ -68,6 +68,7 @@ export const createMyCheckIn = async (req: Request, res: Response) => {
       frontPhoto,
       sidePhoto,
       backPhoto,
+      feedbacks: [],
     });
 
     const admin = await User.findOne({ role: "admin" });
@@ -145,26 +146,32 @@ export const addCoachFeedback = async (req: Request, res: Response) => {
     const coachId = req.user?.userId;
     const { feedback } = req.body;
 
-    if (!feedback) {
+    if (!feedback || !feedback.trim()) {
       return res.status(400).json({
         message: "feedback is required",
       });
     }
 
-    const checkIn = await CheckIn.findByIdAndUpdate(
-      req.params.id,
-      {
-        coachFeedback: feedback,
-        feedbackDate: new Date(),
-      },
-      { new: true }
-    ).populate("user", "fullName email phone");
+    const checkIn = await CheckIn.findById(req.params.id).populate(
+      "user",
+      "fullName email phone"
+    );
 
     if (!checkIn) {
       return res.status(404).json({
         message: "Check-in not found",
       });
     }
+
+    checkIn.feedbacks.push({
+      message: feedback.trim(),
+      createdAt: new Date(),
+    });
+
+    checkIn.coachFeedback = feedback.trim();
+    checkIn.feedbackDate = new Date();
+
+    await checkIn.save();
 
     const user: any = checkIn.user;
 
@@ -177,9 +184,14 @@ export const addCoachFeedback = async (req: Request, res: Response) => {
       link: "/user/checkins",
     });
 
+    const updatedCheckIn = await CheckIn.findById(req.params.id).populate(
+      "user",
+      "fullName email phone"
+    );
+
     res.json({
       message: "Feedback added successfully",
-      checkIn,
+      checkIn: updatedCheckIn,
     });
   } catch (error: any) {
     res.status(500).json({

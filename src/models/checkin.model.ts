@@ -1,5 +1,10 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export interface ICheckInFeedback {
+  message: string;
+  createdAt: Date;
+}
+
 export interface ICheckIn extends Document {
   user: mongoose.Types.ObjectId;
   date: Date;
@@ -11,11 +16,33 @@ export interface ICheckIn extends Document {
   frontPhoto?: string;
   sidePhoto?: string;
   backPhoto?: string;
+
+  feedbacks: ICheckInFeedback[];
+
   coachFeedback?: string;
   feedbackDate?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
+
+const feedbackSchema = new Schema<ICheckInFeedback>(
+  {
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    _id: true,
+  }
+);
 
 const checkInSchema = new Schema<ICheckIn>(
   {
@@ -66,12 +93,18 @@ const checkInSchema = new Schema<ICheckIn>(
     backPhoto: {
       type: String,
     },
+
+    feedbacks: {
+      type: [feedbackSchema],
+      default: [],
+    },
+
     coachFeedback: {
-    type: String,
+      type: String,
     },
 
     feedbackDate: {
-    type: Date,
+      type: Date,
     },
   },
   { timestamps: true }
